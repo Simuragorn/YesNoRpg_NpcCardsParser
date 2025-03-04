@@ -32,12 +32,12 @@ namespace CardsExcelParser
                 return;
             }
 
-            string jsonOutputPath = Path.Combine(Path.GetDirectoryName(excelFilePath), "npc-cards.json");
+            string jsonOutputPath = Path.Combine(Path.GetDirectoryName(excelFilePath), "npc_cards.json");
 
             try
             {
-                var npcCards = ParseNpcCardsFromExcelToJson(excelFilePath);
-                string json = JsonConvert.SerializeObject(npcCards, Formatting.Indented);
+                var npcCardsData = ParseNpcCardsFromExcelToJson(excelFilePath);
+                string json = JsonConvert.SerializeObject(npcCardsData, Formatting.Indented);
                 File.WriteAllText(jsonOutputPath, json);
 
                 Console.WriteLine("Excel file successfully converted to JSON.");
@@ -49,9 +49,9 @@ namespace CardsExcelParser
             }
         }
 
-        public static List<NpcCardDto> ParseNpcCardsFromExcelToJson(string filePath)
+        public static NpcCardsDataDto ParseNpcCardsFromExcelToJson(string filePath)
         {
-            var cards = new List<NpcCardDto>();
+            var result = new NpcCardsDataDto();
 
             using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
@@ -63,7 +63,7 @@ namespace CardsExcelParser
 
                 for (int row = 2; row <= rowCount; row++)
                 {
-                    var card = new NpcCardDto();
+                    var card = new NpcCardConfigurationDto();
                     card.NpcName = GetCellValue(worksheet, row, headers, NpcNameColumnName);
                     string npcEncounterTypeString = GetCellValue(worksheet, row, headers, EncounterTypeColumnName);
                     card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
@@ -74,10 +74,10 @@ namespace CardsExcelParser
                     EncounterResponseOption negativeResponse = GetNegativeResponseOption(worksheet, headers, row);
                     card.ResponseOptions.Add(negativeResponse);
 
-                    cards.Add(card);
+                    result.NpcCardConfigurations.Add(card);
                 }
             }
-            return cards;
+            return result;
 
             static EncounterResponseOption GetAffirmativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
             {

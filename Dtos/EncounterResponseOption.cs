@@ -4,9 +4,9 @@ namespace CardsExcelParser.Dtos
 {
     public class EncounterResponseOption
     {
-        public NpcResponseOptionTypeEnum Type { get; set; }
-        public int GoldDelta { get; set; }
-        public int MaterialsDelta { get; set; }
-        public int ReputationDelta { get; set; }
+        public NpcResponseOptionTypeEnum Type;
+        public int GoldDelta;
+        public int MaterialsDelta;
+        public int ReputationDelta;
     }
 }
