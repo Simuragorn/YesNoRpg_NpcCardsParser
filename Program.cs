@@ -10,20 +10,23 @@ namespace CardsExcelParser
     internal class Program
     {
         private const string NpcNameColumnName = "NPC";
+        private const string NpcImageColumnName = "Image";
         private const string EncounterTypeColumnName = "Encounter Type";
         private const string DialogueColumnName = "Dialogue";
 
+        private const string AffirmativeResponseTextColumnName = "Yes response";
         private const string GoldAffirmativeResponseColumnName = "Gold (yes)";
         private const string MaterialsAffirmativeResponseColumnName = "Materials (yes)";
         private const string ReputationAffirmativeResponseColumnName = "Reputation (yes)";
 
+        private const string NegativeResponseTextColumnName = "No response";
         private const string GoldNegativeResponseColumnName = "Gold (no)";
         private const string MaterialsNegativeResponseColumnName = "Materials (no)";
         private const string ReputationNegativeResponseColumnName = "Reputation (no)";
 
         static void Main(string[] args)
         {
-            Console.Write("Enter the full path of the Excel file: ");
+            Console.Write("Enter the full path of the Excel file with npc cards: ");
             string excelFilePath = Console.ReadLine()?.Trim().Trim('"');
 
             if (string.IsNullOrEmpty(excelFilePath) || !File.Exists(excelFilePath))
@@ -65,6 +68,7 @@ namespace CardsExcelParser
                 {
                     var card = new NpcCardConfigurationDto();
                     card.NpcName = GetCellValue(worksheet, row, headers, NpcNameColumnName);
+                    card.NpcImage = GetCellValue(worksheet, row, headers, NpcImageColumnName);
                     string npcEncounterTypeString = GetCellValue(worksheet, row, headers, EncounterTypeColumnName);
                     card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
                     card.DialogueText = GetCellValue(worksheet, row, headers, DialogueColumnName);
@@ -81,24 +85,26 @@ namespace CardsExcelParser
 
             static EncounterResponseOption GetAffirmativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
             {
+                string responseText = GetCellValue(worksheet, row, headers, AffirmativeResponseTextColumnName);
                 string goldDeltaText = GetCellValue(worksheet, row, headers, GoldAffirmativeResponseColumnName);
                 string materialsDeltaText = GetCellValue(worksheet, row, headers, MaterialsAffirmativeResponseColumnName);
                 string reputationDeltaText = GetCellValue(worksheet, row, headers, ReputationAffirmativeResponseColumnName);
-                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, goldDeltaText, materialsDeltaText, reputationDeltaText);
+                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
                 return affirmativeResponse;
             }
         }
 
         private static EncounterResponseOption GetNegativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
         {
+            string responseText = GetCellValue(worksheet, row, headers, NegativeResponseTextColumnName);
             string goldDeltaText = GetCellValue(worksheet, row, headers, GoldNegativeResponseColumnName);
             string materialsDeltaText = GetCellValue(worksheet, row, headers, MaterialsNegativeResponseColumnName);
             string reputationDeltaText = GetCellValue(worksheet, row, headers, ReputationNegativeResponseColumnName);
-            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, goldDeltaText, materialsDeltaText, reputationDeltaText);
+            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
             return negativeResponse;
         }
 
-        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
+        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, string responseText, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
         {
             int.TryParse(goldDeltaText, out int goldDelta);
             int.TryParse(materialsDeltaText, out int materialsDelta);
@@ -107,6 +113,7 @@ namespace CardsExcelParser
             var responseOption = new EncounterResponseOption
             {
                 Type = type,
+                ResponseText = responseText,
                 GoldDelta = goldDelta,
                 MaterialsDelta = materialsDelta,
                 ReputationDelta = reputationDelta
