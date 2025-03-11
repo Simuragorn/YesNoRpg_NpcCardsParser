@@ -1,4 +1,5 @@
-﻿using CardsExcelParser.Dtos;
+﻿using CardsExcelParser.Constants;
+using CardsExcelParser.Dtos;
 using CardsExcelParser.Enums;
 using CardsExcelParser.Extensions;
 using Newtonsoft.Json;
@@ -9,21 +10,6 @@ namespace CardsExcelParser
 {
     internal class Program
     {
-        private const string NpcNameColumnName = "NPC";
-        private const string NpcImageColumnName = "Image";
-        private const string EncounterTypeColumnName = "Encounter Type";
-        private const string DialogueColumnName = "Dialogue";
-
-        private const string AffirmativeResponseTextColumnName = "Yes response";
-        private const string GoldAffirmativeResponseColumnName = "Gold (yes)";
-        private const string MaterialsAffirmativeResponseColumnName = "Materials (yes)";
-        private const string ReputationAffirmativeResponseColumnName = "Reputation (yes)";
-
-        private const string NegativeResponseTextColumnName = "No response";
-        private const string GoldNegativeResponseColumnName = "Gold (no)";
-        private const string MaterialsNegativeResponseColumnName = "Materials (no)";
-        private const string ReputationNegativeResponseColumnName = "Reputation (no)";
-
         static void Main(string[] args)
         {
             Console.Write("Enter the full path of the Excel file with npc cards: ");
@@ -35,16 +21,26 @@ namespace CardsExcelParser
                 return;
             }
 
-            string jsonOutputPath = Path.Combine(Path.GetDirectoryName(excelFilePath), "npc_cards.json");
+            string npcCardsJsonOutputPath = Path.Combine(Path.GetDirectoryName(excelFilePath), "npc_cards.json");
+            string multilanguageTextsJsonOutputPath = Path.Combine(Path.GetDirectoryName(excelFilePath), "multilanguage_texts.json");
 
             try
             {
-                var npcCardsData = ParseNpcCardsFromExcelToJson(excelFilePath);
-                string json = JsonConvert.SerializeObject(npcCardsData, Formatting.Indented);
-                File.WriteAllText(jsonOutputPath, json);
+                NpcCardsDataDto npcCardsData;
+                MultilanguageTextDataDto multilanguageTextData;
+                using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+                {
+                    npcCardsData = ParseNpcCardsFromExcelPackage(package);
+                    multilanguageTextData = ParseMultilanguageTextsFromExcelPackage(package);
+                }
+                string npcCardsJson = JsonConvert.SerializeObject(npcCardsData, Formatting.Indented);
+                string multilanguageTextJson = JsonConvert.SerializeObject(multilanguageTextData, Formatting.Indented);
 
-                Console.WriteLine("Excel file successfully converted to JSON.");
-                Console.WriteLine($"Output saved to: {jsonOutputPath}");
+                File.WriteAllText(npcCardsJsonOutputPath, npcCardsJson);
+                File.WriteAllText(multilanguageTextsJsonOutputPath, multilanguageTextJson);
+
+                Console.WriteLine("Excel file successfully converted to JSONs.");
+                Console.WriteLine($"Output saved to: {npcCardsJsonOutputPath} and {multilanguageTextsJsonOutputPath}");
             }
             catch (Exception ex)
             {
@@ -52,54 +48,94 @@ namespace CardsExcelParser
             }
         }
 
-        public static NpcCardsDataDto ParseNpcCardsFromExcelToJson(string filePath)
+        private static MultilanguageTextDataDto ParseMultilanguageTextsFromExcelPackage(ExcelPackage package)
+        {
+            var result = new MultilanguageTextDataDto();
+            ExcelWorksheet multilanguageTextsWorksheet = GetWorksheet(package, WorksheetConstants.MultilanguageTextsWorksheetName);
+            int rowCount = multilanguageTextsWorksheet.Dimension.Rows;
+            int colCount = multilanguageTextsWorksheet.Dimension.Columns;
+
+            Dictionary<string, int> headers = GetHeaders(multilanguageTextsWorksheet, colCount);
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var textData = new TextDataDto();
+                textData.Key = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.KeyColumnName);
+
+                if (string.IsNullOrEmpty(textData.Key))
+                {
+                    continue;
+                }
+
+                textData.Language = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.LanguageColumnName);
+                textData.Value = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.ValueColumnName);
+
+                result.TextDatas.Add(textData);
+            }
+            return result;
+        }
+
+        public static NpcCardsDataDto ParseNpcCardsFromExcelPackage(ExcelPackage package)
         {
             var result = new NpcCardsDataDto();
+            ExcelWorksheet npcCardsWorksheet = GetWorksheet(package, WorksheetConstants.NpcCardsWorksheetName);
+            int rowCount = npcCardsWorksheet.Dimension.Rows;
+            int colCount = npcCardsWorksheet.Dimension.Columns;
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            Dictionary<string, int> headers = GetHeaders(npcCardsWorksheet, colCount);
+
+            for (int row = 2; row <= rowCount; row++)
             {
-                ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                int rowCount = worksheet.Dimension.Rows;
-                int colCount = worksheet.Dimension.Columns;
+                var card = new NpcCardConfigurationDto();
+                card.NpcName = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcNameColumnName);
 
-                Dictionary<string, int> headers = GetHeaders(worksheet, colCount);
-
-                for (int row = 2; row <= rowCount; row++)
+                if (string.IsNullOrWhiteSpace(card.NpcName))
                 {
-                    var card = new NpcCardConfigurationDto();
-                    card.NpcName = GetCellValue(worksheet, row, headers, NpcNameColumnName);
-                    card.NpcImage = GetCellValue(worksheet, row, headers, NpcImageColumnName);
-                    string npcEncounterTypeString = GetCellValue(worksheet, row, headers, EncounterTypeColumnName);
-                    card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
-                    card.DialogueText = GetCellValue(worksheet, row, headers, DialogueColumnName);
-
-                    EncounterResponseOption affirmativeResponse = GetAffirmativeResponseOption(worksheet, headers, row);
-                    card.ResponseOptions.Add(affirmativeResponse);
-                    EncounterResponseOption negativeResponse = GetNegativeResponseOption(worksheet, headers, row);
-                    card.ResponseOptions.Add(negativeResponse);
-
-                    result.NpcCardConfigurations.Add(card);
+                    continue;
                 }
+
+                card.NpcImage = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
+                string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
+                card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
+                card.DialogueText = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueColumnName);
+
+                EncounterResponseOption affirmativeResponse = GetAffirmativeResponseOption(npcCardsWorksheet, headers, row);
+                card.ResponseOptions.Add(affirmativeResponse);
+                EncounterResponseOption negativeResponse = GetNegativeResponseOption(npcCardsWorksheet, headers, row);
+                card.ResponseOptions.Add(negativeResponse);
+
+                result.NpcCardConfigurations.Add(card);
             }
             return result;
 
             static EncounterResponseOption GetAffirmativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
             {
-                string responseText = GetCellValue(worksheet, row, headers, AffirmativeResponseTextColumnName);
-                string goldDeltaText = GetCellValue(worksheet, row, headers, GoldAffirmativeResponseColumnName);
-                string materialsDeltaText = GetCellValue(worksheet, row, headers, MaterialsAffirmativeResponseColumnName);
-                string reputationDeltaText = GetCellValue(worksheet, row, headers, ReputationAffirmativeResponseColumnName);
+                string responseText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnName);
+                string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldAffirmativeResponseColumnName);
+                string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsAffirmativeResponseColumnName);
+                string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationAffirmativeResponseColumnName);
                 EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
                 return affirmativeResponse;
             }
         }
 
+        private static ExcelWorksheet GetWorksheet(ExcelPackage package, string worksheetName)
+        {
+            ExcelWorksheet npcCardsWorksheet = package.Workbook.Worksheets.FirstOrDefault(w => w.Name == worksheetName);
+            if (npcCardsWorksheet == null)
+            {
+                throw new Exception($"There is not worksheet with name: {worksheetName}");
+            }
+
+            return npcCardsWorksheet;
+        }
+
         private static EncounterResponseOption GetNegativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
         {
-            string responseText = GetCellValue(worksheet, row, headers, NegativeResponseTextColumnName);
-            string goldDeltaText = GetCellValue(worksheet, row, headers, GoldNegativeResponseColumnName);
-            string materialsDeltaText = GetCellValue(worksheet, row, headers, MaterialsNegativeResponseColumnName);
-            string reputationDeltaText = GetCellValue(worksheet, row, headers, ReputationNegativeResponseColumnName);
+            string responseText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnName);
+            string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldNegativeResponseColumnName);
+            string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsNegativeResponseColumnName);
+            string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationNegativeResponseColumnName);
             EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
             return negativeResponse;
         }
@@ -127,7 +163,6 @@ namespace CardsExcelParser
             {
                 return string.Empty;
             }
-
             string cellValue = worksheet.Cells[row, columnIndex].Text?.Trim() ?? string.Empty;
             return cellValue;
         }
@@ -144,11 +179,6 @@ namespace CardsExcelParser
                 }
             }
             return headers;
-        }
-
-        private static int GetIntValue(string value)
-        {
-            return int.TryParse(value, out int result) ? result : 0;
         }
     }
 }
