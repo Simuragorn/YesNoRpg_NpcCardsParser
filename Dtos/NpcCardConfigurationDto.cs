@@ -7,8 +7,10 @@ namespace CardsExcelParser.Dtos
         public string NpcName;
         public string NpcImage;
         public NpcEncounterTypeEnum NpcEncounterType;
-        public string DialogueText;
         public List<EncounterResponseOption> ResponseOptions;
+
+        public string DialogueTextEnglish;
+        public string DialogueTextFrench;
 
         public NpcCardConfigurationDto()
         {

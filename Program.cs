@@ -97,7 +97,8 @@ namespace CardsExcelParser
                 card.NpcImage = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
                 string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
                 card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
-                card.DialogueText = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueColumnName);
+                card.DialogueTextEnglish = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueEnglishColumnName);
+                card.DialogueTextFrench = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueFrenchColumnName);
 
                 EncounterResponseOption affirmativeResponse = GetAffirmativeResponseOption(npcCardsWorksheet, headers, row);
                 card.ResponseOptions.Add(affirmativeResponse);
@@ -110,11 +111,12 @@ namespace CardsExcelParser
 
             static EncounterResponseOption GetAffirmativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
             {
-                string responseText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnName);
+                string responseTextEnglish = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnNameEnglish);
+                string responseTextFrench = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnNameFrench);
                 string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldAffirmativeResponseColumnName);
                 string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsAffirmativeResponseColumnName);
                 string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationAffirmativeResponseColumnName);
-                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
+                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, responseTextEnglish, responseTextFrench, goldDeltaText, materialsDeltaText, reputationDeltaText);
                 return affirmativeResponse;
             }
         }
@@ -132,15 +134,16 @@ namespace CardsExcelParser
 
         private static EncounterResponseOption GetNegativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
         {
-            string responseText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnName);
+            string responseTextEnglish = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnNameEnglish);
+            string responseTextFrench = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnNameFrench);
             string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldNegativeResponseColumnName);
             string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsNegativeResponseColumnName);
             string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationNegativeResponseColumnName);
-            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, responseText, goldDeltaText, materialsDeltaText, reputationDeltaText);
+            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, responseTextEnglish, responseTextFrench, goldDeltaText, materialsDeltaText, reputationDeltaText);
             return negativeResponse;
         }
 
-        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, string responseText, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
+        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, string responseTextEnglish, string responseTextFrench, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
         {
             int.TryParse(goldDeltaText, out int goldDelta);
             int.TryParse(materialsDeltaText, out int materialsDelta);
@@ -149,7 +152,8 @@ namespace CardsExcelParser
             var responseOption = new EncounterResponseOption
             {
                 Type = type,
-                ResponseText = responseText,
+                ResponseTextEnglish = responseTextEnglish,
+                ResponseTextFrench = responseTextFrench,
                 GoldDelta = goldDelta,
                 MaterialsDelta = materialsDelta,
                 ReputationDelta = reputationDelta
@@ -159,7 +163,7 @@ namespace CardsExcelParser
 
         private static string GetCellValue(ExcelWorksheet worksheet, int row, Dictionary<string, int> headers, string columnName)
         {
-            if (!headers.TryGetValue(columnName, out int columnIndex))
+            if (!headers.TryGetValue(columnName.Replace(" ", ""), out int columnIndex))
             {
                 return string.Empty;
             }
@@ -172,7 +176,7 @@ namespace CardsExcelParser
             var headers = new Dictionary<string, int>();
             for (int col = 1; col <= colCount; col++)
             {
-                string header = worksheet.Cells[1, col].Text.Trim();
+                string header = worksheet.Cells[1, col].Text.Replace(" ", "");
                 if (!string.IsNullOrEmpty(header))
                 {
                     headers[header] = col;
