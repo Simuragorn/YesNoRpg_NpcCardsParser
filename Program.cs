@@ -87,18 +87,34 @@ namespace CardsExcelParser
             for (int row = 2; row <= rowCount; row++)
             {
                 var card = new NpcCardConfigurationDto();
-                card.NpcName = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcNameColumnName);
+                List<string> npcNameHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.NpcNamePartColumnName)).Select(h => h.Key).ToList();
 
-                if (string.IsNullOrWhiteSpace(card.NpcName))
+                List<MultilanguageTextDto> npcNameTexts = new(npcNameHeaders.Count);
+                foreach (var npcNameHeader in npcNameHeaders)
+                {
+                    string language = ExtractLanguageFromHeader(npcNameHeader);
+                    string text = GetCellValue(npcCardsWorksheet, row, headers, npcNameHeader);
+                    npcNameTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+                }
+
+                if (npcNameTexts.All(t => string.IsNullOrWhiteSpace(t.Text)))
                 {
                     continue;
                 }
+                card.NpcNames = npcNameTexts;
 
                 card.NpcImage = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
                 string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
                 card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
-                card.DialogueTextEnglish = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueEnglishColumnName);
-                card.DialogueTextFrench = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DialogueFrenchColumnName);
+                List<string> dialogueHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.DialoguePartColumnName)).Select(h => h.Key).ToList();
+                List<MultilanguageTextDto> dialogueTexts = new(dialogueHeaders.Count);
+                foreach (var dialogueHeader in dialogueHeaders)
+                {
+                    string language = ExtractLanguageFromHeader(dialogueHeader);
+                    string text = GetCellValue(npcCardsWorksheet, row, headers, dialogueHeader);
+                    dialogueTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+                }
+                card.DialogueTexts = dialogueTexts;
 
                 EncounterResponseOption affirmativeResponse = GetAffirmativeResponseOption(npcCardsWorksheet, headers, row);
                 card.ResponseOptions.Add(affirmativeResponse);
@@ -111,14 +127,35 @@ namespace CardsExcelParser
 
             static EncounterResponseOption GetAffirmativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
             {
-                string responseTextEnglish = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnNameEnglish);
-                string responseTextFrench = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.AffirmativeResponseTextColumnNameFrench);
+                List<string> affirmativeResponseHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.AffirmativeResponseTextPartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
+                List<MultilanguageTextDto> affirmativeResponseTexts = new(affirmativeResponseHeaders.Count);
+                foreach (var affirmativeResponseHeader in affirmativeResponseHeaders)
+                {
+                    string language = ExtractLanguageFromHeader(affirmativeResponseHeader);
+                    string text = GetCellValue(worksheet, row, headers, affirmativeResponseHeader);
+                    affirmativeResponseTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+                }
+
                 string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldAffirmativeResponseColumnName);
                 string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsAffirmativeResponseColumnName);
                 string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationAffirmativeResponseColumnName);
-                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, responseTextEnglish, responseTextFrench, goldDeltaText, materialsDeltaText, reputationDeltaText);
+
+                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, affirmativeResponseTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
                 return affirmativeResponse;
             }
+        }
+
+        private static string ExtractLanguageFromHeader(string header)
+        {
+            int start = header.IndexOf('(');
+            int end = header.IndexOf(')');
+
+            if (start != -1 && end != -1 && end > start)
+            {
+                return header.Substring(start + 1, end - start - 1);
+            }
+
+            return header;
         }
 
         private static ExcelWorksheet GetWorksheet(ExcelPackage package, string worksheetName)
@@ -134,16 +171,22 @@ namespace CardsExcelParser
 
         private static EncounterResponseOption GetNegativeResponseOption(ExcelWorksheet worksheet, Dictionary<string, int> headers, int row)
         {
-            string responseTextEnglish = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnNameEnglish);
-            string responseTextFrench = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.NegativeResponseTextColumnNameFrench);
+            List<string> negativeResponseHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.NegativeResponseTextPartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
+            List<MultilanguageTextDto> negativeResponseTexts = new(negativeResponseHeaders.Count);
+            foreach (var negativeResponseHeader in negativeResponseHeaders)
+            {
+                string language = ExtractLanguageFromHeader(negativeResponseHeader);
+                string text = GetCellValue(worksheet, row, headers, negativeResponseHeader);
+                negativeResponseTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+            }
             string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldNegativeResponseColumnName);
             string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsNegativeResponseColumnName);
             string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationNegativeResponseColumnName);
-            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, responseTextEnglish, responseTextFrench, goldDeltaText, materialsDeltaText, reputationDeltaText);
+            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, negativeResponseTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
             return negativeResponse;
         }
 
-        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, string responseTextEnglish, string responseTextFrench, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
+        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, List<MultilanguageTextDto> responseTexts, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
         {
             int.TryParse(goldDeltaText, out int goldDelta);
             int.TryParse(materialsDeltaText, out int materialsDelta);
@@ -152,8 +195,7 @@ namespace CardsExcelParser
             var responseOption = new EncounterResponseOption
             {
                 Type = type,
-                ResponseTextEnglish = responseTextEnglish,
-                ResponseTextFrench = responseTextFrench,
+                ResponseTexts = responseTexts,
                 GoldDelta = goldDelta,
                 MaterialsDelta = materialsDelta,
                 ReputationDelta = reputationDelta

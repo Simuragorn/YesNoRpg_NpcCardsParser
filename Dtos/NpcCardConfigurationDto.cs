@@ -4,13 +4,12 @@ namespace CardsExcelParser.Dtos
 {
     public class NpcCardConfigurationDto
     {
-        public string NpcName;
+        public List<MultilanguageTextDto> NpcNames;
         public string NpcImage;
         public NpcEncounterTypeEnum NpcEncounterType;
         public List<EncounterResponseOption> ResponseOptions;
 
-        public string DialogueTextEnglish;
-        public string DialogueTextFrench;
+        public List<MultilanguageTextDto> DialogueTexts;
 
         public NpcCardConfigurationDto()
         {
