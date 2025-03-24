@@ -87,7 +87,20 @@ namespace CardsExcelParser
             for (int row = 2; row <= rowCount; row++)
             {
                 var card = new NpcCardConfigurationDto();
-                List<string> npcNameHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.NpcNamePartColumnName)).Select(h => h.Key).ToList();
+                card.NpcId = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcIdColumnName);
+                if (string.IsNullOrWhiteSpace(card.NpcId))
+                {
+                    continue;
+                }
+                if (int.TryParse(GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.AgreementsCountRequiredColumnName), out int agreementsCountRequired))
+                {
+                    card.AgreementsCountRequired = agreementsCountRequired;
+                }
+                if (int.TryParse(GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.DisagreementsCountRequiredColumnName), out int disagreementsCountRequired))
+                {
+                    card.DisagreementsCountRequired = disagreementsCountRequired;
+                }
+                List<string> npcNameHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.NpcNamePartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
 
                 List<MultilanguageTextDto> npcNameTexts = new(npcNameHeaders.Count);
                 foreach (var npcNameHeader in npcNameHeaders)
@@ -96,17 +109,12 @@ namespace CardsExcelParser
                     string text = GetCellValue(npcCardsWorksheet, row, headers, npcNameHeader);
                     npcNameTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
                 }
-
-                if (npcNameTexts.All(t => string.IsNullOrWhiteSpace(t.Text)))
-                {
-                    continue;
-                }
                 card.NpcNames = npcNameTexts;
 
                 card.NpcImage = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
                 string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
                 card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
-                List<string> dialogueHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.DialoguePartColumnName)).Select(h => h.Key).ToList();
+                List<string> dialogueHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.DialoguePartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
                 List<MultilanguageTextDto> dialogueTexts = new(dialogueHeaders.Count);
                 foreach (var dialogueHeader in dialogueHeaders)
                 {

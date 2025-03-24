@@ -2,9 +2,12 @@
 {
     public static class NpcCardsHeaderColumns
     {
-        public const string NpcNamePartColumnName = "NPC";
+        public const string NpcIdColumnName = "NPC Id";
+        public const string NpcNamePartColumnName = "NPC Name";
         public const string NpcImageColumnName = "Image";
         public const string EncounterTypeColumnName = "Encounter Type";
+        public const string AgreementsCountRequiredColumnName = "Agreements Count Required";
+        public const string DisagreementsCountRequiredColumnName = "Disagreements Count Required";
         public const string DialoguePartColumnName = "Dialogue";
 
         public const string AffirmativeResponseTextPartColumnName = "Yes response";
