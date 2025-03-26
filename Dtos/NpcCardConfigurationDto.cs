@@ -8,8 +8,8 @@ namespace CardsExcelParser.Dtos
         public List<MultilanguageTextDto> NpcNames;
         public string NpcImage;
         public NpcEncounterTypeEnum NpcEncounterType;
-        public int AgreementsCountRequired;
-        public int DisagreementsCountRequired;
+        public int? AgreementsCountRequired;
+        public int? DisagreementsCountRequired;
         public List<EncounterResponseOption> ResponseOptions;
 
         public List<MultilanguageTextDto> DialogueTexts;
