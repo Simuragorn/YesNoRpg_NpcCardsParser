@@ -4,20 +4,21 @@ using CardsExcelParser.Enums;
 using CardsExcelParser.Extensions;
 using Newtonsoft.Json;
 using OfficeOpenXml;
-using System.ComponentModel;
 
 namespace CardsExcelParser
 {
     internal class Program
     {
+        private static ConsoleColor defaultConsoleColor;
         static void Main(string[] args)
         {
+            defaultConsoleColor = Console.ForegroundColor;
             Console.Write("Enter the full path of the Excel file with npc cards: ");
             string excelFilePath = Console.ReadLine()?.Trim().Trim('"');
 
             if (string.IsNullOrEmpty(excelFilePath) || !File.Exists(excelFilePath))
             {
-                Console.WriteLine("Invalid file path. Please provide a valid Excel file.");
+                PrintError("Invalid file path. Please provide a valid Excel file.");
                 return;
             }
 
@@ -39,13 +40,26 @@ namespace CardsExcelParser
                 File.WriteAllText(npcCardsJsonOutputPath, npcCardsJson);
                 File.WriteAllText(multilanguageTextsJsonOutputPath, multilanguageTextJson);
 
-                Console.WriteLine("Excel file successfully converted to JSONs.");
-                Console.WriteLine($"Output saved to: {npcCardsJsonOutputPath} and {multilanguageTextsJsonOutputPath}");
+                PrintSuccess("Excel file successfully converted to JSONs.");
+                PrintSuccess($"Output saved to: {npcCardsJsonOutputPath} and {multilanguageTextsJsonOutputPath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                PrintError($"Error: {ex.Message}");
             }
+        }
+
+        private static void PrintSuccess(string printingText)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(printingText);
+            Console.ForegroundColor = defaultConsoleColor;
+        }
+         private static void PrintError(string printingText)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(printingText);
+            Console.ForegroundColor = defaultConsoleColor;
         }
 
         private static MultilanguageTextDataDto ParseMultilanguageTextsFromExcelPackage(ExcelPackage package)
@@ -91,6 +105,10 @@ namespace CardsExcelParser
                 if (string.IsNullOrWhiteSpace(card.NpcId))
                 {
                     continue;
+                }
+                if (int.TryParse(GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.ReputationResponseDeltaColumnName), out int reputationDelta))
+                {
+                    card.ReputationResponseDelta = reputationDelta;
                 }
                 if (int.TryParse(GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.AgreementsCountRequiredColumnName), out int agreementsCountRequired))
                 {
