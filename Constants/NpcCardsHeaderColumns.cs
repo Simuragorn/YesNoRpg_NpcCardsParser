@@ -4,7 +4,7 @@
     {
         public const string NpcIdColumnName = "NPC Id";
         public const string NpcNamePartColumnName = "NPC Name";
-        public const string NpcImageColumnName = "Image";
+        public const string NpcImageColumnName = "Image Root";
         public const string EncounterTypeColumnName = "Encounter Type";
         public const string ReputationResponseDeltaColumnName = "Reputation response delta";
         public const string AgreementsCountRequiredColumnName = "Agreements Count Required";

@@ -6,7 +6,7 @@ namespace CardsExcelParser.Dtos
     {
         public string NpcId;
         public List<MultilanguageTextDto> NpcNames;
-        public string NpcImage;
+        public string NpcImageRoot;
         public NpcEncounterTypeEnum NpcEncounterType;
         public int ReputationResponseDelta;
         public int AgreementsCountRequired;
