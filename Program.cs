@@ -101,11 +101,12 @@ namespace CardsExcelParser
             for (int row = 2; row <= rowCount; row++)
             {
                 var card = new NpcCardConfigurationDto();
-                card.NpcId = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcIdColumnName);
-                if (string.IsNullOrWhiteSpace(card.NpcId))
+                card.EncounterId = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterIdColumnName);
+                if (string.IsNullOrWhiteSpace(card.EncounterId))
                 {
                     continue;
                 }
+                card.NpcId = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcIdColumnName);
                 if (int.TryParse(GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.ReputationResponseDeltaColumnName), out int reputationDelta))
                 {
                     card.ReputationResponseDelta = reputationDelta;
@@ -130,6 +131,7 @@ namespace CardsExcelParser
                 card.NpcNames = npcNameTexts;
 
                 card.NpcImageRoot = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
+                card.MiniGameLevel = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.MiniGameLevelColumnName);
                 string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
                 card.NpcEncounterType = (NpcEncounterTypeEnum)EnumHelpers.GetValueByDisplay(typeof(NpcEncounterTypeEnum), npcEncounterTypeString);
                 List<string> dialogueHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.DialoguePartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();

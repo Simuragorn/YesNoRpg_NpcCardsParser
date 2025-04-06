@@ -4,9 +4,11 @@ namespace CardsExcelParser.Dtos
 {
     public class NpcCardConfigurationDto
     {
+        public string EncounterId;
         public string NpcId;
         public List<MultilanguageTextDto> NpcNames;
         public string NpcImageRoot;
+        public string MiniGameLevel;
         public NpcEncounterTypeEnum NpcEncounterType;
         public int ReputationResponseDelta;
         public int AgreementsCountRequired;
