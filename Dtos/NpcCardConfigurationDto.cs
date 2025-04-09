@@ -8,7 +8,8 @@ namespace CardsExcelParser.Dtos
         public string NpcId;
         public List<MultilanguageTextDto> NpcNames;
         public string NpcImageRoot;
-        public string MiniGameLevel;
+        public string ForgingGameMusic;
+        public string ForgingGameMIDI;
         public NpcEncounterTypeEnum NpcEncounterType;
         public int ReputationResponseDelta;
         public int AgreementsCountRequired;
