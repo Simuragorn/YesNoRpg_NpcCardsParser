@@ -5,7 +5,6 @@
         public const string EncounterIdColumnName = "Encounter Id";
         public const string NpcIdColumnName = "NPC Id";
         public const string NpcNamePartColumnName = "NPC Name";
-        public const string NpcImageColumnName = "Image Root";
         public const string ForgingGameMusicColumnName = "Forging-game Music";
         public const string ForgingGameMIDIColumnName = "Forging-game MIDI";
         public const string EncounterTypeColumnName = "Encounter Type";

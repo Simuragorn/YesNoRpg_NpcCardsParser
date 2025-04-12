@@ -130,7 +130,6 @@ namespace CardsExcelParser
                 }
                 card.NpcNames = npcNameTexts;
 
-                card.NpcImageRoot = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.NpcImageColumnName);
                 card.ForgingGameMusic = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.ForgingGameMusicColumnName);
                 card.ForgingGameMIDI = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.ForgingGameMIDIColumnName);
                 string npcEncounterTypeString = GetCellValue(npcCardsWorksheet, row, headers, NpcCardsHeaderColumns.EncounterTypeColumnName);
