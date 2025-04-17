@@ -4,6 +4,6 @@
     {
         public const string KeyColumnName = "Key";
         public const string LanguageColumnName = "Language";
-        public const string ValueColumnName = "Value";
+        public const string ValuePartColumnName = "Value";
     }
 }

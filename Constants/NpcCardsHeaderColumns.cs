@@ -13,11 +13,13 @@
         public const string DisagreementsCountRequiredColumnName = "Disagreements Count Required";
         public const string DialoguePartColumnName = "Dialogue";
 
+        public const string AffirmativeAuthorTextPartColumnName = "YES authors text";
         public const string AffirmativeResponseTextPartColumnName = "Yes response";
         public const string GoldAffirmativeResponseColumnName = "Gold (yes)";
         public const string MaterialsAffirmativeResponseColumnName = "Materials (yes)";
         public const string ReputationAffirmativeResponseColumnName = "Reputation (yes)";
 
+        public const string NegativeAuthorTextPartColumnName = "NO authors text";
         public const string NegativeResponseTextPartColumnName = "No response";
         public const string GoldNegativeResponseColumnName = "Gold (no)";
         public const string MaterialsNegativeResponseColumnName = "Materials (no)";

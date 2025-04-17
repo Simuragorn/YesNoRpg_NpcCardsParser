@@ -55,7 +55,7 @@ namespace CardsExcelParser
             Console.WriteLine(printingText);
             Console.ForegroundColor = defaultConsoleColor;
         }
-         private static void PrintError(string printingText)
+        private static void PrintError(string printingText)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(printingText);
@@ -73,18 +73,23 @@ namespace CardsExcelParser
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var textData = new TextDataDto();
-                textData.Key = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.KeyColumnName);
+                string key = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.KeyColumnName);
 
-                if (string.IsNullOrEmpty(textData.Key))
+                if (string.IsNullOrEmpty(key))
                 {
                     continue;
                 }
 
-                textData.Language = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.LanguageColumnName);
-                textData.Value = GetCellValue(multilanguageTextsWorksheet, row, headers, MultilanguageTextsHeaderColumns.ValueColumnName);
+                List<string> valueHeaders = headers.Where(h => h.Key.Contains(MultilanguageTextsHeaderColumns.ValuePartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
 
-                result.TextDatas.Add(textData);
+                List<TextDataDto> valueTexts = new(valueHeaders.Count);
+                foreach (var valueHeader in valueHeaders)
+                {
+                    string language = ExtractLanguageFromHeader(valueHeader);
+                    string text = GetCellValue(multilanguageTextsWorksheet, row, headers, valueHeader);
+                    valueTexts.Add(new TextDataDto { Key = key, Language = language, Value = text });
+                }
+                result.TextDatas.AddRange(valueTexts);
             }
             return result;
         }
@@ -164,11 +169,20 @@ namespace CardsExcelParser
                     affirmativeResponseTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
                 }
 
+                List<string> affirmativeAuthorTextHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.AffirmativeAuthorTextPartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
+                List<MultilanguageTextDto> affirmativeAuthorTexts = new(affirmativeAuthorTextHeaders.Count);
+                foreach (var affirmativeAuthorTextHeader in affirmativeAuthorTextHeaders)
+                {
+                    string language = ExtractLanguageFromHeader(affirmativeAuthorTextHeader);
+                    string text = GetCellValue(worksheet, row, headers, affirmativeAuthorTextHeader);
+                    affirmativeAuthorTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+                }
+
                 string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldAffirmativeResponseColumnName);
                 string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsAffirmativeResponseColumnName);
                 string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationAffirmativeResponseColumnName);
 
-                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, affirmativeResponseTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
+                EncounterResponseOption affirmativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Affirmative, affirmativeResponseTexts, affirmativeAuthorTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
                 return affirmativeResponse;
             }
         }
@@ -207,14 +221,24 @@ namespace CardsExcelParser
                 string text = GetCellValue(worksheet, row, headers, negativeResponseHeader);
                 negativeResponseTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
             }
+
+            List<string> negativeAuthorTextHeaders = headers.Where(h => h.Key.Contains(NpcCardsHeaderColumns.NegativeAuthorTextPartColumnName.Replace(" ", ""))).Select(h => h.Key).ToList();
+            List<MultilanguageTextDto> negativeAuthorTexts = new(negativeAuthorTextHeaders.Count);
+            foreach (var negativeAuthorTextHeader in negativeAuthorTextHeaders)
+            {
+                string language = ExtractLanguageFromHeader(negativeAuthorTextHeader);
+                string text = GetCellValue(worksheet, row, headers, negativeAuthorTextHeader);
+                negativeAuthorTexts.Add(new MultilanguageTextDto { Language = language, Text = text });
+            }
+
             string goldDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.GoldNegativeResponseColumnName);
             string materialsDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.MaterialsNegativeResponseColumnName);
             string reputationDeltaText = GetCellValue(worksheet, row, headers, NpcCardsHeaderColumns.ReputationNegativeResponseColumnName);
-            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, negativeResponseTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
+            EncounterResponseOption negativeResponse = ParseEncounterResponseOption(NpcResponseOptionTypeEnum.Negative, negativeResponseTexts, negativeAuthorTexts, goldDeltaText, materialsDeltaText, reputationDeltaText);
             return negativeResponse;
         }
 
-        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, List<MultilanguageTextDto> responseTexts, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
+        private static EncounterResponseOption ParseEncounterResponseOption(NpcResponseOptionTypeEnum type, List<MultilanguageTextDto> responseTexts, List<MultilanguageTextDto> authorTexts, string goldDeltaText, string materialsDeltaText, string reputationDeltaText)
         {
             int.TryParse(goldDeltaText, out int goldDelta);
             int.TryParse(materialsDeltaText, out int materialsDelta);
@@ -224,6 +248,7 @@ namespace CardsExcelParser
             {
                 Type = type,
                 ResponseTexts = responseTexts,
+                AuthorTexts = authorTexts,
                 GoldDelta = goldDelta,
                 MaterialsDelta = materialsDelta,
                 ReputationDelta = reputationDelta
